@@ -175,7 +175,7 @@ not an application secret.
 Install and configure:
 
 - AWS CLI with credentials for the target account
-- Terraform `>= 1.6`
+- Terraform `>= 1.5`
 - Docker
 - Git
 

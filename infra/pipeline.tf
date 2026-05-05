@@ -34,50 +34,6 @@ resource "aws_s3_bucket_public_access_block" "artifacts" {
   restrict_public_buckets = true
 }
 
-resource "aws_cloudwatch_log_group" "codebuild" {
-  name              = "/codebuild/${local.name_prefix}"
-  retention_in_days = 14
-}
-
-resource "aws_codebuild_project" "this" {
-  name         = "${local.name_prefix}-build"
-  description  = "Builds the portfolio Docker image, pushes it to ECR, and emits imagedefinitions.json."
-  service_role = aws_iam_role.codebuild.arn
-
-  artifacts {
-    type = "CODEPIPELINE"
-  }
-
-  environment {
-    compute_type    = "BUILD_GENERAL1_SMALL"
-    image           = "aws/codebuild/standard:7.0"
-    type            = "LINUX_CONTAINER"
-    privileged_mode = true
-
-    environment_variable {
-      name  = "AWS_DEFAULT_REGION"
-      value = var.aws_region
-    }
-
-    environment_variable {
-      name  = "ECR_REPOSITORY_NAME"
-      value = aws_ecr_repository.app.name
-    }
-  }
-
-  source {
-    type      = "CODEPIPELINE"
-    buildspec = "buildspec.yml"
-  }
-
-  logs_config {
-    cloudwatch_logs {
-      group_name = aws_cloudwatch_log_group.codebuild.name
-      status     = "ENABLED"
-    }
-  }
-}
-
 resource "aws_codepipeline" "this" {
   name     = "${local.name_prefix}-pipeline"
   role_arn = aws_iam_role.codepipeline.arn

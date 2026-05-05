@@ -99,3 +99,9 @@ variable "codestar_connection_arn" {
     error_message = "codestar_connection_arn must be a CodeStar Connections or CodeConnections connection ARN."
   }
 }
+
+variable "log_retention_days" {
+  description = "CloudWatch Logs retention in days for ECS application and CodeBuild logs."
+  type        = number
+  default     = 7
+}
