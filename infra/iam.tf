@@ -119,8 +119,11 @@ resource "aws_iam_role" "codepipeline" {
 
 data "aws_iam_policy_document" "codepipeline" {
   statement {
-    sid       = "UseGitHubConnection"
-    actions   = ["codestar-connections:UseConnection"]
+    sid = "UseGitHubConnection"
+    actions = [
+      "codestar-connections:UseConnection",
+      "codeconnections:UseConnection"
+    ]
     resources = [var.codestar_connection_arn]
   }
 
