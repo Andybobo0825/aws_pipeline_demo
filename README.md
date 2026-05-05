@@ -135,6 +135,8 @@ Expected variable names may include:
 
 Use `infra/terraform.tfvars.example` as a template and keep real account IDs,
 connection ARNs, and environment-specific values out of version control.
+Treat the connection ARN as environment-specific configuration even when it is
+not an application secret.
 
 ## Project Structure
 
