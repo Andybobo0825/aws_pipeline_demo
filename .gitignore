@@ -1,0 +1,19 @@
+# OMX/runtime-local state
+.omx/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+
+# Terraform local state/cache
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+
+# OS/editor
+.DS_Store
