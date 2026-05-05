@@ -163,7 +163,7 @@ data "aws_iam_policy_document" "codepipeline" {
   }
 
   statement {
-    sid = "PassEcsTaskRoles"
+    sid     = "PassEcsTaskRoles"
     actions = ["iam:PassRole"]
     resources = [
       aws_iam_role.ecs_task_execution.arn,
