@@ -1,0 +1,12 @@
+.git
+.gitignore
+.omx
+__pycache__
+*.pyc
+.pytest_cache
+.venv
+infra
+docs
+README.md
+*.tfstate
+*.tfstate.*
