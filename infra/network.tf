@@ -7,17 +7,17 @@ resource "aws_vpc" "this" {
   enable_dns_hostnames = true
   enable_dns_support   = true
 
-  tags = merge(local.common_tags, {
+  tags = {
     Name = "${local.name_prefix}-vpc"
-  })
+  }
 }
 
 resource "aws_internet_gateway" "this" {
   vpc_id = aws_vpc.this.id
 
-  tags = merge(local.common_tags, {
+  tags = {
     Name = "${local.name_prefix}-igw"
-  })
+  }
 }
 
 resource "aws_subnet" "public" {
@@ -25,12 +25,13 @@ resource "aws_subnet" "public" {
 
   vpc_id                  = aws_vpc.this.id
   cidr_block              = var.public_subnet_cidrs[count.index]
-  availability_zone       = data.aws_availability_zones.available.names[count.index]
+  availability_zone       = local.selected_availability_zones[count.index]
   map_public_ip_on_launch = true
 
-  tags = merge(local.common_tags, {
+  tags = {
     Name = "${local.name_prefix}-public-${count.index + 1}"
-  })
+    Tier = "public"
+  }
 }
 
 resource "aws_route_table" "public" {
@@ -41,13 +42,13 @@ resource "aws_route_table" "public" {
     gateway_id = aws_internet_gateway.this.id
   }
 
-  tags = merge(local.common_tags, {
+  tags = {
     Name = "${local.name_prefix}-public-rt"
-  })
+  }
 }
 
 resource "aws_route_table_association" "public" {
-  count = length(aws_subnet.public)
+  count = 2
 
   subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public.id
@@ -55,7 +56,7 @@ resource "aws_route_table_association" "public" {
 
 resource "aws_security_group" "alb" {
   name        = "${local.name_prefix}-alb-sg"
-  description = "Allow HTTP traffic to the public ALB"
+  description = "Allow public HTTP traffic to the application load balancer"
   vpc_id      = aws_vpc.this.id
 
   ingress {
@@ -67,25 +68,25 @@ resource "aws_security_group" "alb" {
   }
 
   egress {
-    description = "Outbound to ECS tasks"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    description = "Forward traffic to ECS tasks"
+    from_port   = var.container_port
+    to_port     = var.container_port
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
   }
 
-  tags = merge(local.common_tags, {
+  tags = {
     Name = "${local.name_prefix}-alb-sg"
-  })
+  }
 }
 
 resource "aws_security_group" "ecs_service" {
   name        = "${local.name_prefix}-ecs-sg"
-  description = "Allow traffic from ALB to ECS service"
+  description = "Allow only ALB traffic to ECS service tasks"
   vpc_id      = aws_vpc.this.id
 
   ingress {
-    description     = "App port from ALB"
+    description     = "Application traffic from ALB"
     from_port       = var.container_port
     to_port         = var.container_port
     protocol        = "tcp"
@@ -93,14 +94,14 @@ resource "aws_security_group" "ecs_service" {
   }
 
   egress {
-    description = "Outbound for ECR, CloudWatch Logs, and package calls"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    description = "Outbound HTTPS for ECR, CloudWatch Logs, and AWS APIs"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = merge(local.common_tags, {
+  tags = {
     Name = "${local.name_prefix}-ecs-sg"
-  })
+  }
 }

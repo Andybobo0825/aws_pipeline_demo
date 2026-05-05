@@ -2,11 +2,18 @@ aws_region  = "ap-east-1"
 project_name = "aws-devops-portfolio"
 environment  = "dev"
 
-# Create and authorize an AWS CodeStar connection to GitHub first, then paste the ARN here.
-github_connection_arn = "arn:aws:codestar-connections:ap-east-1:123456789012:connection/00000000-0000-0000-0000-000000000000"
-github_owner          = "your-github-user-or-org"
-github_repo           = "aws-devops-portfolio"
-github_branch         = "main"
+# Existing GitHub connection authorized in AWS Developer Tools > Connections.
+# Accept the connection in the AWS console before running the pipeline.
+codestar_connection_arn = "arn:aws:codestar-connections:ap-east-1:123456789012:connection/00000000-0000-0000-0000-000000000000"
+github_owner            = "your-github-user-or-org"
+github_repo             = "aws-devops-portfolio"
+github_branch           = "main"
+
+vpc_cidr            = "10.20.0.0/16"
+public_subnet_cidrs = ["10.20.1.0/24", "10.20.2.0/24"]
+# availability_zones = ["ap-east-1a", "ap-east-1b"]
 
 container_port = 8080
 desired_count  = 1
+task_cpu       = 256
+task_memory    = 512

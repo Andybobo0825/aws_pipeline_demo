@@ -1,10 +1,9 @@
 resource "aws_lb" "app" {
   name               = "${local.name_prefix}-alb"
+  internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb.id]
   subnets            = aws_subnet.public[*].id
-
-  tags = local.common_tags
 }
 
 resource "aws_lb_target_group" "app" {
@@ -16,15 +15,15 @@ resource "aws_lb_target_group" "app" {
 
   health_check {
     enabled             = true
-    path                = "/health"
-    matcher             = "200"
-    interval            = 30
-    timeout             = 5
     healthy_threshold   = 2
+    interval            = 30
+    matcher             = "200"
+    path                = "/health"
+    port                = "traffic-port"
+    protocol            = "HTTP"
+    timeout             = 5
     unhealthy_threshold = 3
   }
-
-  tags = local.common_tags
 }
 
 resource "aws_lb_listener" "http" {
@@ -36,6 +35,4 @@ resource "aws_lb_listener" "http" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.app.arn
   }
-
-  tags = local.common_tags
 }

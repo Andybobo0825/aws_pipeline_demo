@@ -1,14 +1,23 @@
+resource "aws_cloudwatch_log_group" "ecs" {
+  name              = "/ecs/${local.name_prefix}"
+  retention_in_days = 7
+}
+
 resource "aws_ecs_cluster" "this" {
   name = "${local.name_prefix}-cluster"
-  tags = local.common_tags
+
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
 }
 
 resource "aws_ecs_task_definition" "app" {
   family                   = "${local.name_prefix}-task"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  cpu                      = var.task_cpu
-  memory                   = var.task_memory
+  cpu                      = tostring(var.task_cpu)
+  memory                   = tostring(var.task_memory)
   execution_role_arn       = aws_iam_role.ecs_task_execution.arn
   task_role_arn            = aws_iam_role.ecs_task.arn
 
@@ -40,8 +49,6 @@ resource "aws_ecs_task_definition" "app" {
       }
     }
   ])
-
-  tags = local.common_tags
 }
 
 resource "aws_ecs_service" "app" {
@@ -51,10 +58,14 @@ resource "aws_ecs_service" "app" {
   desired_count   = var.desired_count
   launch_type     = "FARGATE"
 
+  deployment_minimum_healthy_percent = 50
+  deployment_maximum_percent         = 200
+  enable_execute_command             = false
+
   network_configuration {
     subnets          = aws_subnet.public[*].id
-    assign_public_ip = true
     security_groups  = [aws_security_group.ecs_service.id]
+    assign_public_ip = true
   }
 
   load_balancer {
@@ -63,10 +74,8 @@ resource "aws_ecs_service" "app" {
     container_port   = var.container_port
   }
 
-  lifecycle {
-    ignore_changes = [task_definition]
-  }
-
-  depends_on = [aws_lb_listener.http]
-  tags       = local.common_tags
+  depends_on = [
+    aws_lb_listener.http,
+    aws_iam_role_policy_attachment.ecs_task_execution
+  ]
 }
