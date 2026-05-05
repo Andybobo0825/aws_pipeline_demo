@@ -15,3 +15,6 @@ Recommended files:
 
 Before committing screenshots, redact account IDs, sensitive ARNs, private repo
 names, or other environment-specific details that should not be public.
+
+Capture screenshots only after `terraform apply` and a successful pipeline run so
+the portfolio evidence matches the deployed AWS resources.
