@@ -2,7 +2,7 @@ import logging
 import os
 import sys
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, render_template, request
 
 
 def create_app() -> Flask:
@@ -20,12 +20,7 @@ def create_app() -> Flask:
 
     @app.get("/")
     def index():
-        return jsonify(
-            {
-                "message": "hello from ecs",
-                "env": os.getenv("APP_ENV", "unknown"),
-            }
-        )
+        return render_template("index.html", app_env=os.getenv("APP_ENV", "unknown"))
 
     @app.get("/health")
     def health():

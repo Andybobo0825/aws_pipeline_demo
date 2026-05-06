@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AWS DevOps Portfolio</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  </head>
+  <body>
+    <main class="page-shell">
+      <section class="hero-card" aria-labelledby="hero-title">
+        <p class="eyebrow">ECS + ECR + CodePipeline + Terraform</p>
+        <h1 id="hero-title">AWS DevOps 自動部署作品集</h1>
+        <p class="hero-copy">
+          這個 Flask 服務會透過 CodePipeline 取得 GitHub commit，交給 CodeBuild 建置 Docker image，
+          推送到 ECR，最後自動更新 ECS Fargate 服務。
+        </p>
+
+        <div class="status-grid" aria-label="Deployment status summary">
+          <div>
+            <span class="label">Environment</span>
+            <strong>{{ app_env }}</strong>
+          </div>
+          <div>
+            <span class="label">Health Check</span>
+            <strong>/health OK</strong>
+          </div>
+          <div>
+            <span class="label">Deploy Proof</span>
+            <strong>Commit 後自動更新</strong>
+          </div>
+        </div>
+
+        <a class="cta" href="/health">查看 Health Check</a>
+      </section>
+
+      <section class="pipeline" aria-label="CI/CD pipeline steps">
+        <article>
+          <span>01</span>
+          <h2>GitHub Commit</h2>
+          <p>推送程式碼後觸發 CodePipeline source stage。</p>
+        </article>
+        <article>
+          <span>02</span>
+          <h2>CodeBuild</h2>
+          <p>建置 Docker image，產出 imagedefinitions.json。</p>
+        </article>
+        <article>
+          <span>03</span>
+          <h2>ECS Deploy</h2>
+          <p>CodePipeline 將新 image 部署到 Fargate service。</p>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>
