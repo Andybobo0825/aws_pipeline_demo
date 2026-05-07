@@ -9,6 +9,8 @@ data "aws_iam_policy_document" "ecs_tasks_assume_role" {
   }
 }
 
+data "aws_caller_identity" "current" {}
+
 resource "aws_iam_role" "ecs_task_execution" {
   name               = "${local.name_prefix}-ecs-exec-role"
   assume_role_policy = data.aws_iam_policy_document.ecs_tasks_assume_role.json
@@ -153,6 +155,7 @@ data "aws_iam_policy_document" "codepipeline" {
   statement {
     sid = "DeployToEcsService"
     actions = [
+      "ecs:DescribeClusters",
       "ecs:DescribeServices",
       "ecs:DescribeTaskDefinition",
       "ecs:DescribeTasks",
@@ -161,6 +164,20 @@ data "aws_iam_policy_document" "codepipeline" {
       "ecs:UpdateService"
     ]
     resources = ["*"]
+  }
+
+  statement {
+    sid     = "TagEcsTaskDefinitionOnRegistration"
+    actions = ["ecs:TagResource"]
+    resources = [
+      "arn:aws:ecs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:task-definition/${local.name_prefix}-task:*"
+    ]
+
+    condition {
+      test     = "StringEquals"
+      variable = "ecs:CreateAction"
+      values   = ["RegisterTaskDefinition"]
+    }
   }
 
   statement {
@@ -173,7 +190,10 @@ data "aws_iam_policy_document" "codepipeline" {
     condition {
       test     = "StringEqualsIfExists"
       variable = "iam:PassedToService"
-      values   = ["ecs-tasks.amazonaws.com"]
+      values = [
+        "ecs.amazonaws.com",
+        "ecs-tasks.amazonaws.com"
+      ]
     }
   }
 }

@@ -4,7 +4,7 @@ resource "random_id" "artifact_bucket_suffix" {
 
 resource "aws_s3_bucket" "artifacts" {
   bucket        = "${local.name_prefix}-artifacts-${random_id.artifact_bucket_suffix.hex}"
-  force_destroy = false
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_versioning" "artifacts" {

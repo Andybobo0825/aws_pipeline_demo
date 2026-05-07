@@ -2,7 +2,7 @@
 
 # AWS DevOps 作品集：ECS、ECR、CodePipeline 與 Terraform
 
-這是一個可放進 GitHub 作品集的 AWS DevOps 專案。專案展示一條完整的自動化交付鏈：
+這是一個 AWS DevOps 專案。專案展示一條完整的自動化交付鏈：
 
 ```text
 GitHub -> CodePipeline -> CodeBuild -> Amazon ECR -> Amazon ECS Fargate
@@ -10,11 +10,9 @@ GitHub -> CodePipeline -> CodeBuild -> Amazon ECR -> Amazon ECS Fargate
 
 應用程式以 Docker 容器化，映像檔推送到 Amazon ECR，服務部署到 Amazon ECS Fargate，基礎設施由 Terraform 管理，應用程式日誌由 CloudWatch Logs 收集。
 
-本專案重點不是複雜商業邏輯，而是證明我能把「程式碼、容器、雲端基礎設施、CI/CD、部署驗證」串成可重複、可版本化、可驗證的 DevOps 流程。
-
 ## 專案目標
 
-依據 `aws-devops-portfolio-ecs-ecr-codepipeline-terraform.md` 的規格，本專案要展示以下能力：
+本專案要展示以下能力：
 
 - 使用 Docker 將 Python Flask API 容器化。
 - 使用 Terraform 建立 AWS 基礎設施。
@@ -99,6 +97,8 @@ Terraform 會建立最小可行的 AWS DevOps demo 架構：
 - 我能整理 README、架構、驗證步驟與截圖證據，讓專案可被面試官快速理解。
 
 ## 架構
+
+![Image](docs/diagrams/readme-cicd-architecture.png)
 
 ```text
 Developer push
@@ -193,46 +193,27 @@ CloudWatch Logs <- ECS Task stdout/stderr
 │   ├── outputs.tf
 │   └── terraform.tfvars.example
 ├── docs/
+│   ├── diagrams/
+│   │   ├── readme-cicd-architecture.drawio
+│   │   ├── readme-cicd-architecture.drawio.svg
+│   │   ├── readme-cicd-architecture.png
+│   │   ├── readme-cicd-architecture.svg
+│   │   └── readme-cicd-flow.drawio
 │   └── screenshots/
-│       └── README.md
+│       ├── CI:CD ve1 AWS_pipeline.png
+│       ├── CI:CD ver1 .png
+│       ├── CI:CD ver2 AWS_pipeline.png
+│       ├── CI:CD ver2.png
+│       ├── CI:CD_build process.png
+│       ├── ecs_cluster.png
+│       ├── service_health_check.png
+│       └── terraform_ecr_image.png
 ├── buildspec.yml
 ├── Dockerfile
 ├── .dockerignore
 └── README.md
 ```
 
-## Terraform 資源說明
-
-### Network
-
-- `aws_vpc.this`：專案 VPC。
-- `aws_subnet.public`：兩個 public subnet。
-- `aws_internet_gateway.this`：讓 public subnet 可連 Internet。
-- `aws_route_table.public`：public route table。
-- `aws_route_table_association.public`：subnet route table 綁定。
-
-### Load Balancer
-
-- `aws_lb.app`：Application Load Balancer。
-- `aws_lb_target_group.app`：ALB target group，target type 為 `ip`。
-- `aws_lb_listener.http`：HTTP listener，port `80`。
-- `aws_security_group.alb`：允許外部 HTTP 流量。
-- `aws_security_group.ecs_service`：只允許 ALB 打到 ECS service。
-
-### Container Runtime
-
-- `aws_ecr_repository.app`：儲存 application image。
-- `aws_ecs_cluster.this`：ECS cluster。
-- `aws_ecs_task_definition.app`：ECS task definition，container name 固定為 `app`。
-- `aws_ecs_service.app`：ECS Fargate service。
-- `aws_cloudwatch_log_group.ecs`：ECS task logs。
-
-### CI/CD
-
-- `aws_s3_bucket.artifacts`：CodePipeline artifact bucket。
-- `aws_codebuild_project.this`：Docker build / ECR push / artifact generation。
-- `aws_codepipeline.this`：Source、Build、Deploy 三階段 pipeline。
-- `aws_cloudwatch_log_group.codebuild`：CodeBuild logs。
 
 ### IAM
 
@@ -241,179 +222,44 @@ CloudWatch Logs <- ECS Task stdout/stderr
 - CodeBuild service role 與 ECR/S3/Logs 權限。
 - CodePipeline service role 與 CodeStar connection、CodeBuild、ECS、S3、IAM PassRole 權限。
 
-## 前置需求
+## 實際截圖證據
 
-本機需要：
+以下截圖已放在 `docs/screenshots/`，檔名即描述截圖內容。README 使用相對路徑嵌入，讓 GitHub 頁面可直接顯示圖片。
 
-- AWS CLI，且已設定可建立相關資源的 credentials。
-- Terraform `>= 1.5`。
-- Docker。
-- Git。
-- Python 3。
+### CI/CD Pipeline：版本 1 概覽
 
-AWS 端需要：
+![Image](docs/screenshots/CI%3ACD%20ve1%20AWS_pipeline.png)
 
-- 可建立 ECR、ECS、ALB、VPC、IAM、S3、CodeBuild、CodePipeline、CloudWatch Logs 的權限。
-- 一個已建立並授權 GitHub repo 的 AWS CodeStarSourceConnection / CodeConnections connection ARN。
+### CI/CD Pipeline：版本 1 階段狀態
 
-> 注意：`codestar_connection_arn` 是環境設定值，請放在 `terraform.tfvars`，不要硬寫在 Terraform code 或 README 中。
+![Image](docs/screenshots/CI%3ACD%20ver1%20.png)
 
-## 部署步驟
+### CI/CD Pipeline：版本 2 概覽
 
-### 1. 設定 Terraform 變數
+![Image](docs/screenshots/CI%3ACD%20ver2%20AWS_pipeline.png)
 
-```bash
-cd infra
-cp terraform.tfvars.example terraform.tfvars
-```
+### CI/CD Pipeline：版本 2 詳細頁面
 
-編輯 `terraform.tfvars`：
+![Image](docs/screenshots/CI%3ACD%20ver2.png)
 
-```hcl
-aws_region              = "ap-east-1"
-project_name            = "aws-devops-portfolio"
-environment             = "dev"
-container_port          = 8080
-github_owner            = "<github-owner>"
-github_repo             = "<github-repo>"
-github_branch           = "main"
-codestar_connection_arn = "<authorized-codestar-connection-arn>"
-```
+### CodeBuild Build Process
 
-### 2. 初始化與檢查 Terraform
+![Image](docs/screenshots/CI%3ACD_build%20process.png)
 
-```bash
-terraform fmt -recursive
-terraform init
-terraform validate
-terraform plan
-```
+### ECS Cluster
 
-`terraform plan` 會需要有效 AWS credentials。確認 plan 後再 apply。
+![Image](docs/screenshots/ecs_cluster.png)
 
-### 3. 建立 AWS 資源
+### Service Health Check
 
-```bash
-terraform apply
-```
+![Image](docs/screenshots/service_health_check.png)
 
-完成後記下 Terraform output：
+### Terraform 建立的 ECR Image
 
-- `application_url`
-- `alb_dns_name`
-- `ecr_repository_url`
-- `codepipeline_name`
-- `codebuild_project_name`
+![Image](docs/screenshots/terraform_ecr_image.png)
 
-### 4. Push commit 觸發 Pipeline
-
-```bash
-git add .
-git commit -m "Update application"
-git push origin main
-```
-
-Pipeline 應會依序執行：
-
-```text
-Source -> Build -> Deploy
-```
-
-### 5. 驗證服務
-
-```bash
-ALB_DNS_NAME="<terraform-output-alb-dns-name>"
-curl "http://${ALB_DNS_NAME}/"
-curl -i "http://${ALB_DNS_NAME}/health"
-```
-
-預期：
-
-- `/` 回傳 JSON。
-- `/health` 回傳 HTTP `200`。
-- CloudWatch Logs 可看到 Flask/Gunicorn log。
-
-### 6. 清除資源
-
-```bash
-cd infra
-terraform destroy
-```
-
-此專案會建立 AWS 資源，可能產生費用；demo 結束後請清除不需要的資源。
-
-## 本機驗證
-
-### Flask API 測試
-
-```bash
-python -m venv .venv
-. .venv/bin/activate
-pip install -r app/requirements.txt pytest
-pytest -q
-```
-
-### 本機啟動 Flask
-
-```bash
-. .venv/bin/activate
-python -m flask --app app.main run --host 0.0.0.0 --port 8080
-curl http://localhost:8080/
-curl -i http://localhost:8080/health
-```
-
-### Docker 測試
-
-```bash
-docker build -t aws-devops-portfolio:local .
-docker run --rm -p 8080:8080 -e APP_ENV=local aws-devops-portfolio:local
-curl http://localhost:8080/health
-```
-
-### Terraform 測試
-
-```bash
-cd infra
-terraform fmt -check -recursive
-terraform init
-terraform validate
-terraform plan
-```
-
-## 驗收清單
-
-完成部署後，應逐項確認：
-
-- Terraform 可以成功建立 ECR。
-- Terraform 可以成功建立 ECS cluster、service、task definition。
-- ALB 可以取得 DNS name。
-- ECS service desired count = `1`，且 service 穩定運行。
-- CodeBuild 可以登入 ECR。
-- ECR 中看得到 `${sha}` 與 `latest` image tags。
-- `imagedefinitions.json` 正確包含 container name `app` 與 image URI。
-- CodePipeline Source、Build、Deploy stages 全部成功。
-- `/health` 回傳 HTTP `200`。
-- CloudWatch Logs 看得到應用程式輸出。
-
-## 截圖證據建議
-
-部署成功後，建議在 `docs/screenshots/` 放入以下截圖，作為作品集證據：
-
-| 證據 | 建議檔名 | 截圖內容 |
-| --- | --- | --- |
-| 架構圖 | `architecture.png` | GitHub -> CodePipeline -> CodeBuild -> ECR -> ECS Fargate |
-| Pipeline 成功 | `codepipeline-success.png` | Source / Build / Deploy stages 成功 |
-| Build 成功 | `codebuild-success.png` | Docker build、ECR push、artifact generation |
-| ECR image | `ecr-image.png` | `${sha}` 與 `latest` tags |
-| ECS service | `ecs-service.png` | Desired count = 1 且 service stable |
-| App response | `app-response.png` | `/` 與 `/health` 回應 |
-| CloudWatch logs | `cloudwatch-logs.png` | ECS task stdout/stderr logs |
-
-請避免把 AWS account ID、private repo、secret、完整敏感 ARN 直接曝光在截圖中。
 
 ## DevOps 能力展示
-
-這個作品集專案可在履歷或面試中說明：
 
 - Containerization with Docker。
 - Infrastructure as Code with Terraform。
@@ -426,11 +272,6 @@ terraform plan
 - Versioned deployment with Git commit SHA image tags。
 - Least-privilege IAM policy design。
 - Release artifact generation with `imagedefinitions.json`。
-
-可使用的履歷描述：
-
-```text
-Built a containerized application delivery pipeline on AWS using CodePipeline, CodeBuild, ECR, ECS Fargate, and Terraform, enabling automated image build, registry push, and rolling deployment.
 ```
 
 ## 參考資料
